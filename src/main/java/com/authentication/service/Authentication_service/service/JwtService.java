@@ -1,140 +1,25 @@
 package com.authentication.service.Authentication_service.service;
 
-import com.authentication.service.Authentication_service.model.constants.ErrorMessage;
 import com.authentication.service.Authentication_service.model.dto.TokenPair;
-import com.authentication.service.Authentication_service.model.exception.InvalidRefreshToken;
-import com.authentication.service.Authentication_service.security.model.CustomUserDetails;
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
 
-import java.security.Key;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
-@Slf4j
-@Service
-public class JwtService {
+public interface JwtService {
 
-    @Value("${app.jwt.secret}")
-    private String jwtSecret;
+    TokenPair generateTokePair(Authentication authentication);
 
-    @Value("${app.jwt.expirationMs}")
-    private long jwtExpirationMs;
+    Boolean isValidToken(String token);
 
-    @Value("${app.jwt.refreshExpirationMs}")
-    private long refreshExpirationMs;
+    Boolean isRefreshToken(String token);
+
+    String extractUsernameFromToken(String token);
+
+    LocalDateTime extractExpiration(String token);
+
+    long extractUserIdFromToken(String token);
+
+    String extractRoleFromToken(String token);
 
 
-    // generate token pair
-    public TokenPair generateTokePair(Authentication authentication) {
-        String accessToken = generateToken(authentication, jwtExpirationMs, "access");
-        String refreshToken = generateToken(authentication, refreshExpirationMs, "refresh");
-
-        return new TokenPair(accessToken, refreshToken);
-    }
-
-    // generate token
-    private String generateToken(Authentication authentication, long expirationMs, String tokenType) {
-        CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", user.getId());
-        claims.put("role", user.getRole());
-        claims.put("tokenType", tokenType);
-
-        Date now = new Date();
-        Date expirationDate = new Date(now.getTime() + expirationMs);
-
-        return Jwts.builder()
-                .setHeaderParam("typ", "JWT")
-                .setSubject(user.getUsername())
-                .addClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(expirationDate)
-                .signWith(getSignKey())
-                .compact();
-    }
-
-    // Validate token
-    public Boolean isValidToken(String token) {
-        try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getSignKey())
-                    .build()
-                    .parseClaimsJws(token);
-            return true;
-        } catch (JwtException | IllegalArgumentException ex) {
-            throw new InvalidRefreshToken(ErrorMessage.INVALID_TOKEN.getMessage());
-        }
-    }
-
-    // Validate if token is refresh token
-    public Boolean isRefreshToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSignKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-
-        String tokenType = claims.get("tokenType", String.class);
-        return "refresh".equals(tokenType);
-    }
-
-    // extract username from token
-    public String extractUsernameFromToken(String token) {
-        return  Jwts.parserBuilder()
-                .setSigningKey(getSignKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
-    }
-
-    // extract expirations from token
-    public LocalDateTime extractExpiration(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSignKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-
-        Date expiration = claims.getExpiration();
-        return LocalDateTime.ofInstant(expiration.toInstant(), ZoneId.systemDefault());
-    }
-
-    // extract userID from token
-    public long extractUserIdFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSignKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-
-        return claims.get("userId", Long.class);
-    }
-
-    // extract role from token
-    public String extractRoleFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSignKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-
-        String role = claims.get("role", String.class);
-        log.info("Extracted role from token: {}", role);
-        return role;
-    }
-
-    private Key getSignKey() {
-        byte[] keyBytes = java.util.Base64.getDecoder().decode(jwtSecret);
-        return Keys.hmacShaKeyFor(keyBytes);
-    }
 }

@@ -2,6 +2,7 @@ package com.authentication.service.Authentication_service.advice;
 
 import com.authentication.service.Authentication_service.model.exception.InvalidRefreshToken;
 import com.authentication.service.Authentication_service.model.exception.InvalidTokenException;
+import com.authentication.service.Authentication_service.model.exception.NotFoundException;
 import com.authentication.service.Authentication_service.model.response.ErrorResponse;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,6 +61,13 @@ public class GlobalExceptionHandler {
         log.error(ex.getMessage());
 
         return buildErrorResponse(ex, HttpStatus.UNAUTHORIZED, request);
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<?>handleNotFoundException(final NotFoundException ex, final HttpServletRequest request) {
+        log.error(ex.getMessage());
+
+        return buildErrorResponse(ex, HttpStatus.NOT_FOUND, request);
     }
 
     private ResponseEntity<ErrorResponse> buildErrorResponse (Exception e, HttpStatus status, HttpServletRequest request) {

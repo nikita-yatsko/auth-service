@@ -7,6 +7,7 @@ import com.authentication.service.Authentication_service.model.dto.LoginRequest;
 import com.authentication.service.Authentication_service.model.dto.RegisterUserRequest;
 import com.authentication.service.Authentication_service.model.dto.TokenPair;
 import com.authentication.service.Authentication_service.model.entity.AuthUser;
+import com.authentication.service.Authentication_service.model.entity.UserRequest;
 import com.authentication.service.Authentication_service.model.exception.DataExistException;
 import com.authentication.service.Authentication_service.model.exception.InvalidRefreshToken;
 import com.authentication.service.Authentication_service.model.exception.InvalidTokenException;
@@ -40,21 +41,44 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     protected final RefreshTokenService refreshTokenService;
+    private final UserClient userClient;
 
 
     @Override
     @Transactional
     public AuthUser registerUser(RegisterUserRequest request) {
-        if (userRepository.existsByUserId(request.getUserId()))
-            throw new DataExistException(ErrorMessage.USER_ALREADY_EXISTS.getMessage(request.getUserId()));
+        String username = request.getUsername();
 
-        if (userRepository.existsByUsername(request.getUsername()))
-            throw new DataExistException(ErrorMessage.USERNAME_ALREADY_EXISTS.getMessage(request.getUsername()));
+        // 1. Проверка на существование пользователя
+        if (userRepository.existsByUsername(username)) {
+            throw new DataExistException(
+                    ErrorMessage.USERNAME_ALREADY_EXISTS.getMessage(username)
+            );
+        }
 
+        // 2. Сохраняем пользователя в auth-service
         AuthUser authUser = userMapper.createAuthUser(request);
         authUser.setPassword(passwordEncoder.encode(request.getPassword()));
+        AuthUser authUserSaved = userRepository.save(authUser);
 
-        return userRepository.save(authUser);
+        log.info("User id is {}", authUserSaved.getId());
+
+        // 3. Создаём профиль в User-service через WebClient (синхронно)
+        UserRequest userRequest = new UserRequest();
+        userRequest.setUserId(authUserSaved.getId());
+        userRequest.setName(request.getUsername());
+        userRequest.setSurname(request.getSurname());
+        userRequest.setBirthDate(request.getBirthDate());
+        userRequest.setEmail(request.getEmail());
+
+
+        try {
+            userClient.createUser(userRequest);
+            return authUserSaved;
+        } catch (Exception e) {
+            log.error("Error while creating user profile in User-service", e);
+            throw new RuntimeException("Failed to create user profile", e); //TODO customize error response
+        }
     }
 
     @Override
@@ -92,7 +116,7 @@ public class AuthServiceImpl implements AuthService {
 
         String username = jwtService.extractUsernameFromToken(refreshTokenValue);
 
-        AuthUser user = userRepository.findUserByUserId(userId)
+        AuthUser user = userRepository.findUserById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException(ErrorMessage.USER_NOT_FOUNT_BY_USERNAME.getMessage(username)));
 
         CustomUserDetails userDetails = new CustomUserDetails(user);

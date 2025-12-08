@@ -16,9 +16,6 @@ public class AuthUser extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "user_id", nullable = false, unique = true)
-    private Integer userId;
-
     @Size(min = 3, max = 30, message = "Username should be between 3 and 30")
     @Column(nullable = false, unique = true)
     private String username;

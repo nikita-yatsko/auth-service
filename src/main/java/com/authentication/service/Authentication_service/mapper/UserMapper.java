@@ -2,6 +2,7 @@ package com.authentication.service.Authentication_service.mapper;
 
 import com.authentication.service.Authentication_service.model.dto.RegisterUserRequest;
 import com.authentication.service.Authentication_service.model.entity.AuthUser;
+import com.authentication.service.Authentication_service.model.entity.UserRequest;
 import com.authentication.service.Authentication_service.model.enums.Role;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -19,4 +20,7 @@ public interface UserMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "role", expression = "java(Role.USER)")
     AuthUser createAuthUser(RegisterUserRequest request);
+
+    @Mapping(target = "userId", source = "userId")
+    UserRequest createUserRequest(RegisterUserRequest request, Integer userId);
 }

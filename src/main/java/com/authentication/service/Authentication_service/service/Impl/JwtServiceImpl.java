@@ -2,7 +2,7 @@ package com.authentication.service.Authentication_service.service.Impl;
 
 import com.authentication.service.Authentication_service.model.constants.ErrorMessage;
 import com.authentication.service.Authentication_service.model.dto.TokenPair;
-import com.authentication.service.Authentication_service.model.exception.InvalidRefreshToken;
+import com.authentication.service.Authentication_service.model.exception.InvalidTokenException;
 import com.authentication.service.Authentication_service.security.model.CustomUserDetails;
 import com.authentication.service.Authentication_service.service.JwtService;
 import com.authentication.service.Authentication_service.service.RefreshTokenService;
@@ -80,7 +80,7 @@ public class JwtServiceImpl implements JwtService {
                     .parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException ex) {
-            throw new InvalidRefreshToken(ErrorMessage.INVALID_TOKEN.getMessage());
+            throw new InvalidTokenException(ErrorMessage.INVALID_TOKEN.getMessage());
         }
     }
 

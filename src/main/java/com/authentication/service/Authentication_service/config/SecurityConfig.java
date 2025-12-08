@@ -1,13 +1,10 @@
 package com.authentication.service.Authentication_service.config;
 
 import com.authentication.service.Authentication_service.security.filter.JwtAuthenticationFilter;
-import com.authentication.service.Authentication_service.service.Impl.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
-import org.mapstruct.BeanMapping;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -31,7 +28,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth ->
                         auth
-                                .anyRequest().permitAll())
+                                .requestMatchers("/api/auth/**").permitAll()
+                                .anyRequest().denyAll())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

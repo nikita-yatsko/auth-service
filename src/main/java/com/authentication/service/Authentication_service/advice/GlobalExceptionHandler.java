@@ -1,5 +1,6 @@
 package com.authentication.service.Authentication_service.advice;
 
+import com.authentication.service.Authentication_service.model.exception.DataExistException;
 import com.authentication.service.Authentication_service.model.exception.InvalidRefreshToken;
 import com.authentication.service.Authentication_service.model.exception.InvalidTokenException;
 import com.authentication.service.Authentication_service.model.exception.NotFoundException;
@@ -68,6 +69,13 @@ public class GlobalExceptionHandler {
         log.error(ex.getMessage());
 
         return buildErrorResponse(ex, HttpStatus.NOT_FOUND, request);
+    }
+
+    @ExceptionHandler(DataExistException.class)
+    public ResponseEntity<?>handleDataExistException(final DataExistException ex, final HttpServletRequest request) {
+        log.error(ex.getMessage());
+
+        return buildErrorResponse(ex, HttpStatus.CONFLICT, request);
     }
 
     private ResponseEntity<ErrorResponse> buildErrorResponse (Exception e, HttpStatus status, HttpServletRequest request) {

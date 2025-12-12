@@ -12,7 +12,7 @@ public class UserClient {
     private final WebClient webClient;
 
     public UserClient(WebClient.Builder builder) {
-        this.webClient = builder.baseUrl("http://localhost:8083").build();
+        this.webClient = builder.baseUrl("http://user-service:8083").build();
     }
 
     public UserRequest createUser(UserRequest request) {

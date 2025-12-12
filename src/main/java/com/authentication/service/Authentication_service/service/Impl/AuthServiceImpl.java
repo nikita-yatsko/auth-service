@@ -8,10 +8,7 @@ import com.authentication.service.Authentication_service.model.dto.RegisterUserR
 import com.authentication.service.Authentication_service.model.dto.TokenPair;
 import com.authentication.service.Authentication_service.model.entity.AuthUser;
 import com.authentication.service.Authentication_service.model.entity.UserRequest;
-import com.authentication.service.Authentication_service.model.exception.DataExistException;
-import com.authentication.service.Authentication_service.model.exception.InvalidRefreshToken;
-import com.authentication.service.Authentication_service.model.exception.InvalidTokenException;
-import com.authentication.service.Authentication_service.model.exception.NotFoundException;
+import com.authentication.service.Authentication_service.model.exception.*;
 import com.authentication.service.Authentication_service.repository.UserRepository;
 import com.authentication.service.Authentication_service.security.model.CustomUserDetails;
 import com.authentication.service.Authentication_service.service.AuthService;
@@ -49,21 +46,17 @@ public class AuthServiceImpl implements AuthService {
     public AuthUser registerUser(RegisterUserRequest request) {
         String username = request.getUsername();
 
-        // 1. Проверка на существование пользователя
         if (userRepository.existsByUsername(username)) {
-            throw new DataExistException(
-                    ErrorMessage.USERNAME_ALREADY_EXISTS.getMessage(username)
+            throw new DataExistException(ErrorMessage.USERNAME_ALREADY_EXISTS.getMessage(username)
             );
         }
 
-        // 2. Сохраняем пользователя в auth-service
         AuthUser authUser = userMapper.createAuthUser(request);
         authUser.setPassword(passwordEncoder.encode(request.getPassword()));
         AuthUser authUserSaved = userRepository.save(authUser);
 
         log.info("User id is {}", authUserSaved.getId());
 
-        // 3. Создаём профиль в User-service через WebClient (синхронно)
         UserRequest userRequest = new UserRequest();
         userRequest.setUserId(authUserSaved.getId());
         userRequest.setName(request.getUsername());
@@ -77,7 +70,7 @@ public class AuthServiceImpl implements AuthService {
             return authUserSaved;
         } catch (Exception e) {
             log.error("Error while creating user profile in User-service", e);
-            throw new RuntimeException("Failed to create user profile", e); //TODO customize error response
+            throw new CreateUserException(ErrorMessage.CREATE_USER_ERROR.getMessage());
         }
     }
 
@@ -128,7 +121,7 @@ public class AuthServiceImpl implements AuthService {
                         userDetails.getAuthorities()
                 );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication); // put user to SecurityContext
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         return jwtService.generateTokePair(authentication);
     }

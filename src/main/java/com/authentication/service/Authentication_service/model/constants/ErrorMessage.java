@@ -18,6 +18,7 @@ public enum ErrorMessage {
     EXPIRED_REFRESH_TOKEN("Expired refresh token"),
     REFRESH_TOKEN_ALREADY_EXISTS("Refresh token already exists"),
     REFRESH_TOKEN_NOT_FOUND("Refresh token not found"),
+    CREATE_USER_ERROR("User creations failed"),
     ;
 
     private final String message;

@@ -33,7 +33,7 @@ public class AuthController {
             @RequestBody @Valid LoginRequest loginRequest ) {
         log.info("Request to login user: {}", loginRequest);
         TokenPair tokenPair = authService.login(loginRequest);
-        log.info("Token pair: {}", tokenPair);
+        log.info("Token pair was created.");
         return ResponseEntity.ok().body(tokenPair);
     }
 
